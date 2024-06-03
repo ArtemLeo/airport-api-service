@@ -1,13 +1,15 @@
 from rest_framework import viewsets, mixins
 
-from airport.models import AirplaneType, Airplane, Crew, Country
+from airport.models import AirplaneType, Airplane, Crew, Country, City
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
     AirplaneDetailSerializer,
     AirplaneListSerializer,
     CrewSerializer,
-    CountrySerializer
+    CountrySerializer,
+    CitySerializer,
+    CityListSerializer
 )
 
 
@@ -26,7 +28,7 @@ class AirplaneViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
 ):
-    queryset = Airplane.objects.prefetch_related("airplane_type")
+    queryset = Airplane.objects.select_related("airplane_type")
 
     @staticmethod
     def _params_to_ints(qs):
