@@ -1,6 +1,6 @@
 from rest_framework import viewsets, mixins
 
-from airport.models import AirplaneType, Airplane, Crew, Country, City, Airport, Route
+from airport.models import AirplaneType, Airplane, Crew, Country, City, Airport, Route, Flight
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -15,7 +15,10 @@ from airport.serializers import (
     AirportListSerializer,
     RouteSerializer,
     RouteListSerializer,
-    RouteDetailSerializer
+    RouteDetailSerializer,
+    FlightListSerializer,
+    FlightSerializer,
+    FlightDetailSerializer
 )
 
 
@@ -163,3 +166,52 @@ class RouteViewSet(
             return RouteDetailSerializer
 
         return RouteSerializer
+
+
+class FlightViewSet(
+    viewsets.GenericViewSet,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin
+):
+    queryset = (
+        Flight.objects
+        .select_related("route", "airplane")
+        .prefetch_related("crew")
+    )
+
+    @staticmethod
+    def _params_to_ints(qs):
+        """Converts a list of string IDs to a list of integers"""
+        return [int(str_id) for str_id in qs.split(",")]
+
+    def get_queryset(self):
+        """Retrieve the flights with filters"""
+        routes = self.request.query_params.get("route")
+        airplanes = self.request.query_params.get("airplane")
+        crews = self.request.query_params.get("crew")
+
+        queryset = self.queryset
+
+        if routes:
+            routes_ids = self._params_to_ints(routes)
+            queryset = queryset.filter(route__id__in=routes_ids)
+
+        if airplanes:
+            airplanes_ids = self._params_to_ints(airplanes)
+            queryset = queryset.filter(airplane__id__in=airplanes_ids)
+
+        if crews:
+            crews_ids = self._params_to_ints(crews)
+            queryset = queryset.filter(crew__id__in=crews_ids)
+
+        return queryset.distinct()
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return FlightListSerializer
+
+        if self.action == "retrieve":
+            return FlightDetailSerializer
+
+        return FlightSerializer
