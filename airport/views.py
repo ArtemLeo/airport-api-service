@@ -21,5 +21,22 @@ class AirplaneViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin
 ):
-    queryset = Airplane.objects.all()
+    queryset = Airplane.objects.prefetch_related("airplane_type")
     serializer_class = AirplaneSerializer
+
+    @staticmethod
+    def _params_to_ints(qs):
+        """Converts a list of string IDs to a list of integers"""
+        return [int(str_id) for str_id in qs.split(",")]
+
+    def get_queryset(self):
+        """Retrieve the airplanes with airplane_type filter"""
+        airplane_types = self.request.query_params.get("airplane_type")
+
+        queryset = self.queryset
+
+        if airplane_types:
+            airplane_types_ids = self._params_to_ints(airplane_types)
+            queryset = queryset.filter(airplane_type__id__in=airplane_types_ids)
+
+        return queryset.distinct()
