@@ -4,7 +4,8 @@ from airport.models import (
     AirplaneType,
     Airplane,
     Crew,
-    Country
+    Country,
+    City
 )
 
 
@@ -40,3 +41,15 @@ class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
         fields = "__all__"
+
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = "__all__"
+
+
+class CityListSerializer(CitySerializer):
+    country = serializers.SlugRelatedField(
+        many=False, read_only=True, slug_field="name"
+    )
