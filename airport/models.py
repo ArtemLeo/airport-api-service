@@ -60,3 +60,14 @@ class Route(models.Model):
 
     def __str__(self):
         return f"{self.source} - {self.destination}"
+
+
+class Flight(models.Model):
+    route = models.ForeignKey(Route, on_delete=models.CASCADE)
+    airplane = models.ForeignKey(Airplane, on_delete=models.CASCADE)
+    departure_time = models.DateTimeField()
+    arrival_time = models.DateTimeField()
+    crew = models.ManyToManyField(Crew)
+
+    def __str__(self):
+        return self.route
