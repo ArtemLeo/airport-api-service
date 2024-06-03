@@ -1,6 +1,6 @@
 from rest_framework import viewsets, mixins
 
-from airport.models import AirplaneType, Airplane, Crew, Country, City, Airport
+from airport.models import AirplaneType, Airplane, Crew, Country, City, Airport, Route
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -12,7 +12,10 @@ from airport.serializers import (
     CityListSerializer,
     AirportSerializer,
     AirportDetailSerializer,
-    AirportListSerializer
+    AirportListSerializer,
+    RouteSerializer,
+    RouteListSerializer,
+    RouteDetailSerializer
 )
 
 
@@ -120,3 +123,43 @@ class AirportViewSet(
             return AirportDetailSerializer
 
         return AirportSerializer
+
+
+class RouteViewSet(
+    viewsets.GenericViewSet,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin
+):
+    queryset = Route.objects.select_related("source", "destination")
+
+    @staticmethod
+    def _params_to_ints(qs):
+        """Converts a list of string IDs to a list of integers"""
+        return [int(str_id) for str_id in qs.split(",")]
+
+    def get_queryset(self):
+        """Retrieve the routes with filters"""
+        sources = self.request.query_params.get("source")
+        destinations = self.request.query_params.get("destination")
+
+        queryset = self.queryset
+
+        if sources:
+            sources_ids = self._params_to_ints(sources)
+            queryset = queryset.filter(source__id__in=sources_ids)
+
+        if destinations:
+            destinations_ids = self._params_to_ints(destinations)
+            queryset = queryset.filter(destination__id__in=destinations_ids)
+
+        return queryset.distinct()
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return RouteListSerializer
+
+        if self.action == "retrieve":
+            return RouteDetailSerializer
+
+        return RouteSerializer
