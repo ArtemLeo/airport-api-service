@@ -6,7 +6,8 @@ from airport.models import (
     Crew,
     Country,
     City,
-    Airport
+    Airport,
+    Route
 )
 
 
@@ -68,3 +69,23 @@ class AirportListSerializer(AirportSerializer):
 
 class AirportDetailSerializer(AirportSerializer):
     closest_big_city = CityListSerializer(many=False, read_only=True)
+
+
+class RouteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Route
+        fields = "__all__"
+
+
+class RouteListSerializer(RouteSerializer):
+    source = serializers.StringRelatedField(
+        many=False, source="source.closest_big_city"
+    )
+    destination = serializers.StringRelatedField(
+        many=False, source="destination.closest_big_city"
+    )
+
+
+class RouteDetailSerializer(RouteSerializer):
+    source = AirportListSerializer(many=False, read_only=True)
+    destination = AirportListSerializer(many=False, read_only=True)
