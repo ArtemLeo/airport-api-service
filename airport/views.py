@@ -1,6 +1,6 @@
 from rest_framework import viewsets, mixins
 
-from airport.models import AirplaneType, Airplane, Crew, Country, City
+from airport.models import AirplaneType, Airplane, Crew, Country, City, Airport
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -9,7 +9,10 @@ from airport.serializers import (
     CrewSerializer,
     CountrySerializer,
     CitySerializer,
-    CityListSerializer
+    CityListSerializer,
+    AirportSerializer,
+    AirportDetailSerializer,
+    AirportListSerializer
 )
 
 
@@ -82,3 +85,38 @@ class CityViewSet(
             return CityListSerializer
 
         return CitySerializer
+
+
+class AirportViewSet(
+    viewsets.GenericViewSet,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+):
+    queryset = Airport.objects.select_related("closest_big_city")
+
+    @staticmethod
+    def _params_to_ints(qs):
+        """Converts a list of string IDs to a list of integers"""
+        return [int(str_id) for str_id in qs.split(",")]
+
+    def get_queryset(self):
+        """Retrieve the airports with closest_big_city filter"""
+        closest_big_cities = self.request.query_params.get("closest_big_city")
+
+        queryset = self.queryset
+
+        if closest_big_cities:
+            closest_big_cities_ids = self._params_to_ints(closest_big_cities)
+            queryset = queryset.filter(closest_big_city__id__in=closest_big_cities_ids)
+
+        return queryset.distinct()
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return AirportListSerializer
+
+        if self.action == "retrieve":
+            return AirportDetailSerializer
+
+        return AirportSerializer
