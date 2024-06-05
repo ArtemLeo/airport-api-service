@@ -1,4 +1,6 @@
 from django.db.models import F, Count
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, mixins
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -60,7 +62,7 @@ class AirplaneViewSet(
 
     def get_queryset(self):
         """Retrieve the airplanes with airplane_type filter"""
-        airplane_types = self.request.query_params.get("airplane_type")
+        airplane_types = self.request.query_params.get("airplane_types")
 
         queryset = self.queryset
 
@@ -76,7 +78,20 @@ class AirplaneViewSet(
             return AirplaneListSerializer
         if self.action == "retrieve":
             return AirplaneDetailSerializer
+
         return AirplaneSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "airplane_types",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by airplane_type id (ex. ?airplane_types=2,5)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class CrewViewSet(
@@ -120,23 +135,36 @@ class AirportViewSet(
 
     def get_queryset(self):
         """Retrieve the airports with closest_big_city filter"""
-        closest_big_cities = self.request.query_params.get("closest_big_city")
+        closest_big_city = self.request.query_params.get("closest_big_city")
 
         queryset = self.queryset
 
-        if closest_big_cities:
-            closest_big_cities_ids = params_to_ints(closest_big_cities)
+        if closest_big_city:
             queryset = queryset.filter(
-                closest_big_city__id__in=closest_big_cities_ids
+                closest_big_city__name__icontains=closest_big_city
             )
-        return queryset.distinct()
+
+            return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
             return AirportListSerializer
         if self.action == "retrieve":
             return AirportDetailSerializer
+
         return AirportSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "closest_big_city",
+                type=OpenApiTypes.STR,
+                description="Filter by closest_big_city (ex. ?closest_big_city=Paris)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class RouteViewSet(
@@ -149,17 +177,20 @@ class RouteViewSet(
 
     def get_queryset(self):
         """Retrieve the routes with filters"""
-        sources = self.request.query_params.get("source")
-        destinations = self.request.query_params.get("destination")
+        source = self.request.query_params.get("source")
+        destination = self.request.query_params.get("destination")
+
         queryset = self.queryset
 
-        if sources:
-            sources_ids = params_to_ints(sources)
-            queryset = queryset.filter(source__id__in=sources_ids)
+        if source:
+            queryset = queryset.filter(
+                source__closest_big_city__name__icontains=source
+            )
 
-        if destinations:
-            destinations_ids = params_to_ints(destinations)
-            queryset = queryset.filter(destination__id__in=destinations_ids)
+        if destination:
+            queryset = queryset.filter(
+                destination__closest_big_city__name__icontains=destination
+            )
 
         return queryset.distinct()
 
@@ -168,7 +199,25 @@ class RouteViewSet(
             return RouteListSerializer
         if self.action == "retrieve":
             return RouteDetailSerializer
+
         return RouteSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "source",
+                type=OpenApiTypes.STR,
+                description="Filter by source (ex. ?source=Paris)",
+            ),
+            OpenApiParameter(
+                "destination",
+                type=OpenApiTypes.STR,
+                description="Filter by destination id (ex. ?destination=Kyiv)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class FlightViewSet(
@@ -192,23 +241,21 @@ class FlightViewSet(
 
     def get_queryset(self):
         """Retrieve the flights with filters"""
-        routes = self.request.query_params.get("route")
-        airplanes = self.request.query_params.get("airplane")
-        crews = self.request.query_params.get("crew")
+        routes = self.request.query_params.get("routes")
+        airplanes = self.request.query_params.get("airplanes")
+        crews = self.request.query_params.get("crews")
+
         queryset = self.queryset
 
         if routes:
             routes_ids = params_to_ints(routes)
             queryset = queryset.filter(route__id__in=routes_ids)
-
         if airplanes:
             airplanes_ids = params_to_ints(airplanes)
             queryset = queryset.filter(airplane__id__in=airplanes_ids)
-
         if crews:
             crews_ids = params_to_ints(crews)
             queryset = queryset.filter(crew__id__in=crews_ids)
-
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -216,7 +263,30 @@ class FlightViewSet(
             return FlightListSerializer
         if self.action == "retrieve":
             return FlightDetailSerializer
+
         return FlightSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "routes",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by route id (ex. ?route=2,5)",
+            ),
+            OpenApiParameter(
+                "airplanes",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by airplane id (ex. ?airplane=2,5)",
+            ),
+            OpenApiParameter(
+                "crews",
+                type={"type": "list", "items": {"type": "number"}},
+                description="Filter by crew id (ex. ?crew=2,5)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class OrderPagination(PageNumberPagination):
