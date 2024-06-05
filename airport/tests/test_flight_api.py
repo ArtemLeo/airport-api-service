@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 
 from airport.models import Flight
 from airport.serializers import FlightListSerializer
-from airport.tests.sample_data import sample_flight, sample_route
+from airport.tests.sample_data import sample_flight, sample_route, sample_airplane
 
 FLIGHT_URL = reverse("airport:flight-list")
 
@@ -59,6 +59,27 @@ class AuthenticatedFlightApiTests(TestCase):
 
         res = self.client.get(
             FLIGHT_URL, {"routes": f"{route1.id}, {route2.id}"}
+        )
+
+        serializer1 = FlightListSerializer(flight1)
+        serializer2 = FlightListSerializer(flight2)
+        serializer3 = FlightListSerializer(flight3)
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertIn(serializer2.data, res.data)
+        self.assertNotIn(serializer3.data, res.data)
+
+    def test_filter_flights_by_airplanes(self):
+        airplane1 = sample_airplane(name="Airplane 1")
+        airplane2 = sample_airplane(name="Airplane 2")
+        airplane3 = sample_airplane(name="Airplane 3")
+
+        flight1 = sample_flight(airplane=airplane1)
+        flight2 = sample_flight(airplane=airplane2)
+        flight3 = sample_flight(airplane=airplane3)
+
+        res = self.client.get(
+            FLIGHT_URL, {"airplanes": f"{airplane1.id}, {airplane2.id}"}
         )
 
         serializer1 = FlightListSerializer(flight1)
