@@ -2,7 +2,6 @@ from django.db.models import F, Count
 from rest_framework import viewsets, mixins
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
-
 from airport.models import (
     AirplaneType,
     Airplane,
@@ -32,7 +31,8 @@ from airport.serializers import (
     FlightListSerializer,
     FlightSerializer,
     FlightDetailSerializer,
-    OrderSerializer
+    OrderSerializer,
+    OrderListSerializer
 )
 
 
@@ -62,13 +62,11 @@ class AirplaneViewSet(
         """Retrieve the airplanes with airplane_type filter"""
         airplane_types = self.request.query_params.get("airplane_type")
         queryset = self.queryset
-
         if airplane_types:
             airplane_types_ids = self._params_to_ints(airplane_types)
             queryset = queryset.filter(
                 airplane_type__id__in=airplane_types_ids
             )
-
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -127,13 +125,11 @@ class AirportViewSet(
         """Retrieve the airports with closest_big_city filter"""
         closest_big_cities = self.request.query_params.get("closest_big_city")
         queryset = self.queryset
-
         if closest_big_cities:
             closest_big_cities_ids = self._params_to_ints(closest_big_cities)
             queryset = queryset.filter(
                 closest_big_city__id__in=closest_big_cities_ids
             )
-
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -250,6 +246,9 @@ class OrderViewSet(
         return Order.objects.filter(user=self.request.user)
 
     def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+
         return OrderSerializer
 
     def perform_create(self, serializer):
