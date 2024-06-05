@@ -1,10 +1,6 @@
-from rest_framework import serializersfrom
-
-django.db
-import transaction
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-
 from airport.models import (
     AirplaneType,
     Airplane,
@@ -28,7 +24,14 @@ class AirplaneTypeSerializer(serializers.ModelSerializer):
 class AirplaneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airplane
-        fields = ("id", "name", "rows", "seats_in_row", "airplane_type", "capacity")
+        fields = (
+            "id",
+            "name",
+            "rows",
+            "seats_in_row",
+            "airplane_type",
+            "capacity"
+        )
 
 
 class AirplaneListSerializer(AirplaneSerializer):
@@ -135,16 +138,34 @@ class FlightListSerializer(FlightSerializer):
 
     class Meta:
         model = Flight
-        fields = ("id", "route", "airplane", "departure_time", "arrival_time", "crew", "tickets_available")
+        fields = (
+            "id",
+            "route",
+            "airplane",
+            "departure_time",
+            "arrival_time",
+            "crew",
+            "tickets_available"
+        )
 
 
 class FlightDetailSerializer(FlightListSerializer):
     route = RouteListSerializer(many=False, read_only=True)
-    taken_places = TicketSeatsSerializer(source="tickets", many=True, read_only=True)
+    taken_places = TicketSeatsSerializer(
+        source="tickets", many=True, read_only=True
+    )
 
     class Meta:
         model = Flight
-        fields = ("id", "route", "airplane", "departure_time", "arrival_time", "crew", "taken_places")
+        fields = (
+            "id",
+            "route",
+            "airplane",
+            "departure_time",
+            "arrival_time",
+            "crew",
+            "taken_places"
+        )
 
 
 class OrderSerializer(serializers.ModelSerializer):

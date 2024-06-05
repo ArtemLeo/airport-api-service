@@ -3,7 +3,17 @@ from rest_framework import viewsets, mixins
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
-from airport.models import AirplaneType, Airplane, Crew, Country, City, Airport, Route, Flight, Order
+from airport.models import (
+    AirplaneType,
+    Airplane,
+    Crew,
+    Country,
+    City,
+    Airport,
+    Route,
+    Flight,
+    Order
+)
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -52,9 +62,13 @@ class AirplaneViewSet(
         """Retrieve the airplanes with airplane_type filter"""
         airplane_types = self.request.query_params.get("airplane_type")
         queryset = self.queryset
+
         if airplane_types:
             airplane_types_ids = self._params_to_ints(airplane_types)
-            queryset = queryset.filter(airplane_type__id__in=airplane_types_ids)
+            queryset = queryset.filter(
+                airplane_type__id__in=airplane_types_ids
+            )
+
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -93,7 +107,6 @@ class CityViewSet(
     def get_serializer_class(self):
         if self.action == "list":
             return CityListSerializer
-
         return CitySerializer
 
 
@@ -113,22 +126,21 @@ class AirportViewSet(
     def get_queryset(self):
         """Retrieve the airports with closest_big_city filter"""
         closest_big_cities = self.request.query_params.get("closest_big_city")
-
         queryset = self.queryset
 
         if closest_big_cities:
             closest_big_cities_ids = self._params_to_ints(closest_big_cities)
-            queryset = queryset.filter(closest_big_city__id__in=closest_big_cities_ids)
+            queryset = queryset.filter(
+                closest_big_city__id__in=closest_big_cities_ids
+            )
 
         return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
             return AirportListSerializer
-
         if self.action == "retrieve":
             return AirportDetailSerializer
-
         return AirportSerializer
 
 
@@ -149,26 +161,20 @@ class RouteViewSet(
         """Retrieve the routes with filters"""
         sources = self.request.query_params.get("source")
         destinations = self.request.query_params.get("destination")
-
         queryset = self.queryset
-
         if sources:
             sources_ids = self._params_to_ints(sources)
             queryset = queryset.filter(source__id__in=sources_ids)
-
         if destinations:
             destinations_ids = self._params_to_ints(destinations)
             queryset = queryset.filter(destination__id__in=destinations_ids)
-
         return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
             return RouteListSerializer
-
         if self.action == "retrieve":
             return RouteDetailSerializer
-
         return RouteSerializer
 
 
@@ -201,30 +207,23 @@ class FlightViewSet(
         routes = self.request.query_params.get("route")
         airplanes = self.request.query_params.get("airplane")
         crews = self.request.query_params.get("crew")
-
         queryset = self.queryset
-
         if routes:
             routes_ids = self._params_to_ints(routes)
             queryset = queryset.filter(route__id__in=routes_ids)
-
         if airplanes:
             airplanes_ids = self._params_to_ints(airplanes)
             queryset = queryset.filter(airplane__id__in=airplanes_ids)
-
         if crews:
             crews_ids = self._params_to_ints(crews)
             queryset = queryset.filter(crew__id__in=crews_ids)
-
         return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
             return FlightListSerializer
-
         if self.action == "retrieve":
             return FlightDetailSerializer
-
         return FlightSerializer
 
 
