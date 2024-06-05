@@ -14,11 +14,15 @@ from airport.models import (
     Crew,
     Flight
 )
-from airport.serializers import AirportListSerializer
+from airport.serializers import AirportListSerializer, AirportDetailSerializer
 
 AIRPLANE_URL = reverse("airport:airplane-list")
 AIRPORT_URL = reverse("airport:airport-list")
 FLIGHT_URL = reverse("airport:flight-list")
+
+
+def detail_url(airport_id):
+    return reverse("airport:airport-detail", args=[airport_id])
 
 
 def sample_airplane(**params):
@@ -145,3 +149,14 @@ class AuthenticatedAirportApiTests(TestCase):
         self.assertIn(serializer1.data, res.data)
         self.assertIn(serializer2.data, res.data)
         self.assertNotIn(serializer3.data, res.data)
+
+    def test_retrieve_airport_detail(self):
+        airport = sample_airport()
+
+        url = detail_url(airport.id)
+        res = self.client.get(url)
+
+        serializer = AirportDetailSerializer(airport)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serializer.data)
