@@ -75,12 +75,13 @@ def sample_flight(**params):
     defaults = {
         "route": route,
         "airplane": airplane,
-        "departure_time": "2023-11-18 14:00:00",
-        "arrival_time": "2023-11-18 19:00:00",
+        "departure_time": "2023-11-18T14:00:00+02:00",
+        "arrival_time": "2023-11-18T19:00:00+02:00",
     }
     defaults.update(params)
 
     flight = Flight.objects.create(**defaults)
     flight.crew.add(crew)
+    flight.tickets_available = 80
 
     return flight
