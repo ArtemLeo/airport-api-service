@@ -51,8 +51,8 @@ def sample_airport(**params):
 
 
 def sample_route(**params):
-    source = sample_city(name="Source City")
-    destination = sample_city(name="Destination City")
+    source = sample_airport(name="Source Airport")
+    destination = sample_airport(name="Destination Airport")
 
     defaults = {
         "source": source,
@@ -77,8 +77,10 @@ def sample_flight(**params):
         "airplane": airplane,
         "departure_time": "2023-11-18 14:00:00",
         "arrival_time": "2023-11-18 19:00:00",
-        "crew": crew
     }
     defaults.update(params)
 
-    return Flight.objects.create(**defaults)
+    flight = Flight.objects.create(**defaults)
+    flight.crew.add(crew)
+
+    return flight
