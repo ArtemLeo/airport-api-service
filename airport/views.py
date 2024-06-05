@@ -1,9 +1,12 @@
 from django.db.models import F, Count
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
+
 from airport.models import (
     AirplaneType,
     Airplane,
@@ -34,7 +37,9 @@ from airport.serializers import (
     FlightSerializer,
     FlightDetailSerializer,
     OrderSerializer,
-    OrderListSerializer
+    OrderListSerializer,
+    AirplaneImageSerializer,
+    AirportImageSerializer
 )
 
 
@@ -63,9 +68,7 @@ class AirplaneViewSet(
     def get_queryset(self):
         """Retrieve the airplanes with airplane_type filter"""
         airplane_types = self.request.query_params.get("airplane_types")
-
         queryset = self.queryset
-
         if airplane_types:
             airplane_types_ids = params_to_ints(airplane_types)
             queryset = queryset.filter(
@@ -79,7 +82,27 @@ class AirplaneViewSet(
         if self.action == "retrieve":
             return AirplaneDetailSerializer
 
+        if self.action == "upload_image":
+            return AirplaneImageSerializer
+
         return AirplaneSerializer
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="upload-image",
+        permission_classes=[IsAdminUser],
+    )
+    def upload_image(self, request, pk=None):
+        """Endpoint for uploading image to specific airplane"""
+        airplane = self.get_object()
+        serializer = self.get_serializer(airplane, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
         parameters=[
@@ -136,15 +159,12 @@ class AirportViewSet(
     def get_queryset(self):
         """Retrieve the airports with closest_big_city filter"""
         closest_big_city = self.request.query_params.get("closest_big_city")
-
         queryset = self.queryset
-
         if closest_big_city:
             queryset = queryset.filter(
                 closest_big_city__name__icontains=closest_big_city
             )
-
-            return queryset.distinct()
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -152,7 +172,27 @@ class AirportViewSet(
         if self.action == "retrieve":
             return AirportDetailSerializer
 
+        if self.action == "upload_image":
+            return AirportImageSerializer
+
         return AirportSerializer
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="upload-image",
+        permission_classes=[IsAdminUser],
+    )
+    def upload_image(self, request, pk=None):
+        """Endpoint for uploading image to specific airport"""
+        airport = self.get_object()
+        serializer = self.get_serializer(airport, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
         parameters=[
@@ -179,19 +219,15 @@ class RouteViewSet(
         """Retrieve the routes with filters"""
         source = self.request.query_params.get("source")
         destination = self.request.query_params.get("destination")
-
         queryset = self.queryset
-
         if source:
             queryset = queryset.filter(
                 source__closest_big_city__name__icontains=source
             )
-
         if destination:
             queryset = queryset.filter(
                 destination__closest_big_city__name__icontains=destination
             )
-
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -199,7 +235,6 @@ class RouteViewSet(
             return RouteListSerializer
         if self.action == "retrieve":
             return RouteDetailSerializer
-
         return RouteSerializer
 
     @extend_schema(
@@ -244,9 +279,7 @@ class FlightViewSet(
         routes = self.request.query_params.get("routes")
         airplanes = self.request.query_params.get("airplanes")
         crews = self.request.query_params.get("crews")
-
         queryset = self.queryset
-
         if routes:
             routes_ids = params_to_ints(routes)
             queryset = queryset.filter(route__id__in=routes_ids)
@@ -263,7 +296,6 @@ class FlightViewSet(
             return FlightListSerializer
         if self.action == "retrieve":
             return FlightDetailSerializer
-
         return FlightSerializer
 
     @extend_schema(
