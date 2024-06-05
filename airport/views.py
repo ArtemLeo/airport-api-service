@@ -1,6 +1,9 @@
+from django.db.models import F, Count
 from rest_framework import viewsets, mixins
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 
-from airport.models import AirplaneType, Airplane, Crew, Country, City, Airport, Route, Flight
+from airport.models import AirplaneType, Airplane, Crew, Country, City, Airport, Route, Flight, Order
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -18,7 +21,8 @@ from airport.serializers import (
     RouteDetailSerializer,
     FlightListSerializer,
     FlightSerializer,
-    FlightDetailSerializer
+    FlightDetailSerializer,
+    OrderSerializer
 )
 
 
@@ -178,6 +182,13 @@ class FlightViewSet(
         Flight.objects
         .select_related("route", "airplane")
         .prefetch_related("crew")
+        .annotate(
+            tickets_available=(
+                    F("airplane__rows")
+                    * F("airplane__seats_in_row")
+                    - Count("tickets")
+            )
+        )
     )
 
     @staticmethod
@@ -215,3 +226,32 @@ class FlightViewSet(
             return FlightDetailSerializer
 
         return FlightSerializer
+
+
+class OrderPagination(PageNumberPagination):
+    page_size = 10
+    max_page_size = 100
+
+
+class OrderViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+):
+    queryset = Order.objects.prefetch_related(
+        "tickets__flight__route",
+        "tickets__flight__airplane",
+        "tickets__flight__crew"
+    )
+    serializer_class = OrderSerializer
+    pagination_class = OrderPagination
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        return OrderSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
