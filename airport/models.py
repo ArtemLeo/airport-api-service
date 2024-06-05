@@ -1,5 +1,8 @@
-from django.conf import settings
+import os
+import uuid
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
+from django.conf import settings
 from django.db import models
 
 
@@ -10,11 +13,20 @@ class AirplaneType(models.Model):
         return self.name
 
 
+def movie_image_file_path(instance, filename):
+    _, extension = os.path.splitext(filename)
+    filename = f"{slugify(instance.name)}-{uuid.uuid4()}{extension}"
+    dirname = f"{slugify(type(instance).__name__)}s/"
+
+    return os.path.join("uploads/", dirname, filename)
+
+
 class Airplane(models.Model):
     name = models.CharField(max_length=255)
     rows = models.IntegerField()
     seats_in_row = models.IntegerField()
     airplane_type = models.ForeignKey(AirplaneType, on_delete=models.CASCADE)
+    image = models.ImageField(null=True, upload_to=movie_image_file_path)
 
     @property
     def capacity(self) -> int:
@@ -54,6 +66,7 @@ class City(models.Model):
 class Airport(models.Model):
     name = models.CharField(max_length=255)
     closest_big_city = models.ForeignKey(City, on_delete=models.CASCADE)
+    image = models.ImageField(null=True, upload_to=movie_image_file_path)
 
     def __str__(self):
         return f"{self.name} ({self.closest_big_city})"
