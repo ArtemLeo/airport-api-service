@@ -124,3 +124,24 @@ class AuthenticatedAirportApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
+
+    def test_filter_airports_by_closest_big_city(self):
+        city1 = sample_city(name="First City")
+        city2 = sample_city(name="Second City")
+        city3 = sample_city(name="Extra one")
+
+        airport1 = sample_airport(name="Airport 1", closest_big_city=city1)
+        airport2 = sample_airport(name="Airport 2", closest_big_city=city2)
+        airport3 = sample_airport(name="Airport 3", closest_big_city=city3)
+
+        res = self.client.get(
+            AIRPORT_URL, {"closest_big_city": "City"}
+        )
+
+        serializer1 = AirportListSerializer(airport1)
+        serializer2 = AirportListSerializer(airport2)
+        serializer3 = AirportListSerializer(airport3)
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertIn(serializer2.data, res.data)
+        self.assertNotIn(serializer3.data, res.data)
