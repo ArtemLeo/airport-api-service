@@ -123,3 +123,18 @@ class AuthenticatedFlightApiTests(TestCase):
         self.assertIn(serializer1.data, res.data)
         self.assertIn(serializer2.data, res.data)
         self.assertNotIn(serializer3.data, res.data)
+
+    def test_create_flight_forbidden(self):
+        route = sample_route()
+        airplane = sample_airplane()
+
+        payload = {
+            "route": route.pk,
+            "airplane": airplane.pk,
+            "departure_time": "2023-11-18T14:00:00+02:00",
+            "arrival_time": "2023-11-18T19:00:00+02:00",
+        }
+
+        res = self.client.post(FLIGHT_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
