@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from airport.models import Airplane, AirplaneType
-from airport.serializers import AirplaneListSerializer
+from airport.serializers import AirplaneListSerializer, AirplaneDetailSerializer
 from airport.tests.sample_data import sample_airplane
 
 AIRPLANE_URL = reverse("airport:airplane-list")
@@ -71,3 +71,14 @@ class AuthenticatedAirplaneApiTests(TestCase):
         self.assertIn(serializer1.data, res.data)
         self.assertIn(serializer2.data, res.data)
         self.assertNotIn(serializer3.data, res.data)
+
+    def test_retrieve_airplane_detail(self):
+        airplane = sample_airplane()
+
+        url = detail_url(airplane.id)
+        res = self.client.get(url)
+
+        serializer = AirplaneDetailSerializer(airplane)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data, serializer.data)
