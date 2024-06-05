@@ -21,6 +21,12 @@ class AirplaneTypeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class AirplaneImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Airplane
+        fields = ("id", "image")
+
+
 class AirplaneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airplane
@@ -30,7 +36,8 @@ class AirplaneSerializer(serializers.ModelSerializer):
             "rows",
             "seats_in_row",
             "airplane_type",
-            "capacity"
+            "capacity",
+            "image"
         )
 
 
@@ -66,6 +73,12 @@ class CityListSerializer(CitySerializer):
     country = serializers.SlugRelatedField(
         many=False, read_only=True, slug_field="name"
     )
+
+
+class AirportImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Airport
+        fields = ("id", "image")
 
 
 class AirportSerializer(serializers.ModelSerializer):
