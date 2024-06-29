@@ -27,7 +27,7 @@
 
 ## Installation and Usage:
 <ul>
-    <li><strong>Install Python 3.10</strong.></li>
+    <li><strong>Install Python 3.10.</strong></li>
     <li><strong>Install PostgreSQL and create db.</strong></li>
     <li><strong>Install Docker.</strong></li>
     <li><strong>Clone the repository.</strong></li>
